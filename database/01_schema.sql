@@ -94,6 +94,7 @@ GO
 
 CREATE INDEX IX_Books_TitleAuthor ON dbo.Books(Title, Author);
 CREATE INDEX IX_Readers_Name ON dbo.Readers(Name);
+CREATE UNIQUE INDEX UQ_Accounts_ReaderCardNo ON dbo.Accounts(ReaderCardNo) WHERE ReaderCardNo IS NOT NULL;
 CREATE INDEX IX_BorrowRecords_Reader_ReturnDate ON dbo.BorrowRecords(ReaderCardNo, ReturnDate);
 CREATE INDEX IX_BorrowRecords_Isbn_ReturnDate ON dbo.BorrowRecords(Isbn, ReturnDate);
 GO
