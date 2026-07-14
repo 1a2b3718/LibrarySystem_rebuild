@@ -30,7 +30,13 @@ CREATE TABLE dbo.Books
     UpdatedAt DATETIME2 NOT NULL CONSTRAINT DF_Books_UpdatedAt DEFAULT SYSUTCDATETIME(),
     CONSTRAINT PK_Books PRIMARY KEY (Isbn),
     CONSTRAINT CK_Books_TotalCopies CHECK (TotalCopies >= 0),
-    CONSTRAINT CK_Books_AvailableCopies CHECK (AvailableCopies >= 0 AND AvailableCopies <= TotalCopies)
+    CONSTRAINT CK_Books_AvailableCopies CHECK (AvailableCopies >= 0 AND AvailableCopies <= TotalCopies),
+    CONSTRAINT CK_Books_IsBorrowable_Available CHECK (IsBorrowable = 0 OR AvailableCopies > 0),
+    CONSTRAINT CK_Books_Isbn_NotBlank CHECK (LEN(LTRIM(RTRIM(Isbn))) > 0),
+    CONSTRAINT CK_Books_Title_NotBlank CHECK (LEN(LTRIM(RTRIM(Title))) > 0),
+    CONSTRAINT CK_Books_Publisher_NotBlank CHECK (LEN(LTRIM(RTRIM(Publisher))) > 0),
+    CONSTRAINT CK_Books_Author_NotBlank CHECK (LEN(LTRIM(RTRIM(Author))) > 0),
+    CONSTRAINT CK_Books_UpdatedAt CHECK (UpdatedAt >= CreatedAt)
 );
 GO
 
@@ -49,7 +55,13 @@ CREATE TABLE dbo.Readers
     CONSTRAINT PK_Readers PRIMARY KEY (ReaderCardNo),
     CONSTRAINT CK_Readers_Gender CHECK (Gender IN (N'男', N'女', N'其他')),
     CONSTRAINT CK_Readers_MaxBorrowCount CHECK (MaxBorrowCount BETWEEN 0 AND 20),
-    CONSTRAINT CK_Readers_BorrowedCount CHECK (BorrowedCount >= 0 AND BorrowedCount <= MaxBorrowCount)
+    CONSTRAINT CK_Readers_BorrowedCount CHECK (BorrowedCount >= 0 AND BorrowedCount <= MaxBorrowCount),
+    CONSTRAINT CK_Readers_CardNo_NotBlank CHECK (LEN(LTRIM(RTRIM(ReaderCardNo))) > 0),
+    CONSTRAINT CK_Readers_Name_NotBlank CHECK (LEN(LTRIM(RTRIM(Name))) > 0),
+    CONSTRAINT CK_Readers_Title_NotBlank CHECK (LEN(LTRIM(RTRIM(Title))) > 0),
+    CONSTRAINT CK_Readers_Department_NotBlank CHECK (LEN(LTRIM(RTRIM(Department))) > 0),
+    CONSTRAINT CK_Readers_Phone_NotBlank CHECK (Phone IS NULL OR LEN(LTRIM(RTRIM(Phone))) > 0),
+    CONSTRAINT CK_Readers_UpdatedAt CHECK (UpdatedAt >= CreatedAt)
 );
 GO
 
@@ -67,7 +79,10 @@ CREATE TABLE dbo.Accounts
     CONSTRAINT UQ_Accounts_Username UNIQUE (Username),
     CONSTRAINT CK_Accounts_Role CHECK (Role IN (N'Admin', N'Reader')),
     CONSTRAINT FK_Accounts_Readers FOREIGN KEY (ReaderCardNo) REFERENCES dbo.Readers(ReaderCardNo),
-    CONSTRAINT CK_Accounts_ReaderRole CHECK ((Role = N'Reader' AND ReaderCardNo IS NOT NULL) OR (Role = N'Admin'))
+    CONSTRAINT CK_Accounts_ReaderRole CHECK ((Role = N'Reader' AND ReaderCardNo IS NOT NULL) OR (Role = N'Admin' AND ReaderCardNo IS NULL)),
+    CONSTRAINT CK_Accounts_Username_NotBlank CHECK (LEN(LTRIM(RTRIM(Username))) > 0),
+    CONSTRAINT CK_Accounts_PasswordHash_Format CHECK (LEN(PasswordHash) = 64 AND PasswordHash NOT LIKE '%[^0-9A-Fa-f]%'),
+    CONSTRAINT CK_Accounts_PasswordSalt_NotBlank CHECK (LEN(LTRIM(RTRIM(PasswordSalt))) > 0)
 );
 GO
 
@@ -88,7 +103,11 @@ CREATE TABLE dbo.BorrowRecords
     CONSTRAINT FK_BorrowRecords_Books FOREIGN KEY (Isbn) REFERENCES dbo.Books(Isbn),
     CONSTRAINT CK_BorrowRecords_LoanDays CHECK (LoanDays BETWEEN 1 AND 180),
     CONSTRAINT CK_BorrowRecords_Fine CHECK (Fine >= 0),
-    CONSTRAINT CK_BorrowRecords_ReturnDate CHECK (ReturnDate IS NULL OR ReturnDate >= BorrowDate)
+    CONSTRAINT CK_BorrowRecords_ReturnDate CHECK (ReturnDate IS NULL OR ReturnDate >= BorrowDate),
+    CONSTRAINT CK_BorrowRecords_OpenLoanState CHECK (ReturnDate IS NOT NULL OR (Fine = 0 AND FinePaid = 1)),
+    CONSTRAINT CK_BorrowRecords_FinePaidConsistency CHECK (Fine > 0 OR FinePaid = 1),
+    CONSTRAINT CK_BorrowRecords_ReaderCardNo_NotBlank CHECK (LEN(LTRIM(RTRIM(ReaderCardNo))) > 0),
+    CONSTRAINT CK_BorrowRecords_Isbn_NotBlank CHECK (LEN(LTRIM(RTRIM(Isbn))) > 0)
 );
 GO
 
